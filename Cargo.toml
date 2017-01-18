@@ -1,5 +1,5 @@
 [package]
-name = "nmf"
+name = "nmf-arrayfire"
 version = "0.1.0"
 authors = ["Hongjie Zhai <zhaihj@live.jp>"]
 
