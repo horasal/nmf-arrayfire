@@ -21,7 +21,7 @@ cd nmf-arrayfire; cargo build --release
 Prepare the data:
 
 data should be in csv format with space delimiter,
-where the first line should contain ** number of rows number of columns**
+where the first line should contain __number of rows, number of columns__
 
 For example:
 
