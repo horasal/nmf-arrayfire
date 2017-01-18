@@ -1,0 +1,8 @@
+[package]
+name = "nmf"
+version = "0.1.0"
+authors = ["Hongjie Zhai <zhaihj@live.jp>"]
+
+[dependencies]
+arrayfire = "*"
+csv = "*"
