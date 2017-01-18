@@ -51,12 +51,12 @@ fn main() {
             args[0]);
         return;
     }
-    let f1 = &args[1];
-    let f4 = args[2].parse::<usize>().unwrap_or(100);
-    let f5 = args[3].parse::<f32>().unwrap_or(0.001);
-    let f6 = args[4].parse::<u64>().unwrap();
-    println!("Parameters:\nfile1={}, iter={}, error={}, ndim={}",
-    f1, f4, f5, f6);
+    let input_file = &args[1];
+    let max_iter = args[2].parse::<usize>().unwrap_or(100);
+    let max_error = args[3].parse::<f32>().unwrap_or(0.001);
+    let target_dim = args[4].parse::<u64>().unwrap();
+    println!("Parameters: file1={}, iter={}, error={}, ndim={}",
+        input_file, max_iter, max_error, target_dim);
 
     let backends = get_available_backends();
     if backends.contains(&Backend::CUDA) {
@@ -72,31 +72,34 @@ fn main() {
 
     info();
 
-    let f1 = read_matrix(f1);
+    // Non-negative Matrix Factorization
+    // A = WH
+    let A = read_matrix(input_file);
     let mut error = f32::INFINITY;
     let mut old_error = f32::INFINITY;
     let mut i = 0;
 
-    let d1 = f1.dims();
-    let mut l1 = randu::<f32>(Dim4::new(&[d1[0], f6, 1, 1]));
-    let mut r1 = randu::<f32>(Dim4::new(&[f6, d1[1], 1, 1]));
+    let input_file_dimension = A.dims();
+    let mut w = randu::<f32>(Dim4::new(&[input_file_dimension[0], target_dim, 1, 1]));
+    let mut h = randu::<f32>(Dim4::new(&[target_dim, input_file_dimension[1], 1, 1]));
 
-    while error > f5 && i < f4 {
-        l1 = mul(&l1, &div(
-            &matmul(&f1, &r1, MatProp::NONE, MatProp::TRANS),
-            &matmul(&matmul(&l1, &r1, MatProp::NONE, MatProp::NONE), &r1, MatProp::NONE, MatProp::TRANS)
+    while error > max_error && i < max_iter {
+        w = mul(&w, &div(
+            &matmul(&A, &w, MatProp::NONE, MatProp::TRANS),
+            &matmul(&matmul(&w, &h, MatProp::NONE, MatProp::NONE), &h, MatProp::NONE, MatProp::TRANS)
         ,false), false);
-        r1 = mul(&r1, &div(
-            &matmul(&l1, &f1, MatProp::TRANS, MatProp::NONE),
-            &matmul(&l1, &matmul(&l1, &r1, MatProp::NONE, MatProp::NONE), MatProp::TRANS, MatProp::NONE)
+        h = mul(&h, &div(
+            &matmul(&w, &A, MatProp::TRANS, MatProp::NONE),
+            &matmul(&w, &matmul(&w, &h, MatProp::NONE, MatProp::NONE), MatProp::TRANS, MatProp::NONE)
         ,false), false);
-        let e1 = sub(&f1, &matmul(&l1, &r1, MatProp::NONE, MatProp::NONE), false);
+        // calculate the sequared-error
+        let e1 = sub(&A, &matmul(&w, &h, MatProp::NONE, MatProp::NONE), false);
         let e1 = sum_all(&mul(&e1, &e1, false)).0 as f32;
         error = (old_error - e1).abs();
         old_error = e1;
         i += 1;
         println!("iter:{:05} current error:{:.7}, step:{:7}", i, e1, error);
     }
-    save_matrix("l1.mat", &l1);
-    save_matrix("r1.mat", &r1);
+    save_matrix("w.mat", &w);
+    save_matrix("h.mat", &h);
 }

@@ -40,4 +40,4 @@ Run:
 
 Check the result:
 
-Factorizated matrix will be saved into "l1.mat" and "r1.mat". You can open it with any editor.
+Factorizated matrix will be saved into "w.mat" and "h.mat". You can open it with any editor.
